@@ -1,0 +1,42 @@
+# Docker Compose for local development
+# MongoDB + Backend API (+ optional Judge0 CE)
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:7
+    container_name: ocj-mongodb
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongo_data:/data/db
+    restart: unless-stopped
+
+  backend:
+    build: ./backend
+    container_name: ocj-backend
+    ports:
+      - '5000:5000'
+    environment:
+      - NODE_ENV=production
+      - PORT=5000
+      - MONGODB_URI=mongodb://mongodb:27017/online-code-judge
+      - JWT_SECRET=change_this_in_production
+      - CLIENT_URL=http://localhost:5173
+      - JUDGE0_API_URL=http://judge0:2358
+    depends_on:
+      - mongodb
+    restart: unless-stopped
+
+  # Self-hosted Judge0 CE (alternative to RapidAPI)
+  judge0:
+    image: judge0/judge0:latest
+    container_name: ocj-judge0
+    ports:
+      - '2358:2358'
+    privileged: true
+  # Note: Judge0 requires Redis/PostgreSQL in full setup.
+  # For production, use RapidAPI or follow https://github.com/judge0/judge0
+
+volumes:
+  mongo_data:
