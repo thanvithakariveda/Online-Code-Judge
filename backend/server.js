@@ -2,41 +2,58 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 
+import { connectDB } from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 
 dotenv.config();
+
+// Connect MongoDB first
+connectDB();
 
 const app = express();
 
 app.use(
   cors({
-    origin: [
-      "https://online-code-judge-steel.vercel.app",
-      "http://localhost:5173",
+    origin: process.env.CLIENT_URL.split(","),
+
+    methods: [
+      "GET",
+      "POST",
+      "PUT",
+      "DELETE",
+      "OPTIONS"
     ],
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-    credentials: true,
+
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization"
+    ],
+
+    credentials: true
   })
 );
 
+// Handle browser preflight requests
 app.options("*", cors());
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Routes
 app.use("/auth", authRoutes);
 
+// Health check
 app.get("/", (req, res) => {
   res.send("Backend running");
 });
 
+// Global error handler
 app.use((err, req, res, next) => {
-  console.log("ERROR:", err);
+  console.error("ERROR:", err);
 
   res.status(500).json({
     success: false,
-    message: "Internal Server Error",
+    message: err.message || "Internal Server Error"
   });
 });
 

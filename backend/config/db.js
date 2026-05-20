@@ -1,15 +1,20 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
 /**
- * Connect to MongoDB using Mongoose.
- * Exits process on connection failure.
+ * Connect to MongoDB using Mongoose
  */
 export const connectDB = async () => {
   try {
     const conn = await mongoose.connect(process.env.MONGODB_URI);
-    console.log(`MongoDB connected: ${conn.connection.host}`);
+
+    console.log(
+      `MongoDB connected: ${conn.connection.host}`
+    );
   } catch (error) {
-    console.error(`MongoDB connection error: ${error.message}`);
+    console.error(
+      `MongoDB connection error: ${error.message}`
+    );
+
     process.exit(1);
   }
 };
