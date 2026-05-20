@@ -1,13 +1,13 @@
 import api from "./axios.js";
 
-// ---------------- AUTH ----------------
+// AUTH
 export const authAPI = {
   register: (data) => api.post("/auth/register", data),
   login: (data) => api.post("/auth/login", data),
   getMe: () => api.get("/auth/me"),
 };
 
-// ---------------- PROBLEMS ----------------
+// PROBLEMS
 export const problemsAPI = {
   getAll: (params) => api.get("/problems", { params }),
   getById: (id) => api.get(`/problems/${id}`),
@@ -16,7 +16,7 @@ export const problemsAPI = {
   delete: (id) => api.delete(`/problems/${id}`),
 };
 
-// ---------------- SUBMISSIONS ----------------
+// SUBMISSIONS
 export const submissionsAPI = {
   submit: (data) => api.post("/submissions", data),
   getMine: () => api.get("/submissions/me"),
@@ -24,13 +24,13 @@ export const submissionsAPI = {
     api.get(`/submissions/problem/${problemId}`),
 };
 
-// ---------------- LEADERBOARD ----------------
+// LEADERBOARD
 export const leaderboardAPI = {
   get: (limit = 50) =>
     api.get("/leaderboard", { params: { limit } }),
 };
 
-// ---------------- CONTESTS ----------------
+// CONTESTS
 export const contestsAPI = {
   getAll: () => api.get("/contests"),
 };
