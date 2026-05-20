@@ -2,7 +2,7 @@ import axios from "axios";
 import { AUTH_STORAGE, ROUTES } from "../constants/routes.js";
 
 const api = axios.create({
-  baseURL: "https://online-code-judge-final.onrender.com",
+  baseURL: "https://online-code-judge-2.onrender.com",
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",

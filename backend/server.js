@@ -11,7 +11,7 @@ const app = express();
 app.use(
   cors({
     origin: [
-      "https://online-code-judge-phi.vercel.app",
+      "online-code-judge-steel.vercel.app",
       "http://localhost:5173"
     ],
     credentials: true
