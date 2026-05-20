@@ -1,61 +1,81 @@
-import { createContext, useContext, useState } from "react";
-import api from "../api/axios.js";
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { authAPI } from '../api/services.js';
+import { AUTH_STORAGE } from '../constants/routes.js';
 
-const AuthContext = createContext();
+const AuthContext = createContext(null);
 
-const safeParse = (value) => {
-  try {
-    if (!value || value === "undefined") return null;
-    return JSON.parse(value);
-  } catch {
-    return null;
-  }
-};
-
+/**
+ * Auth state: JWT stored in localStorage, attached to API requests via axios interceptor.
+ * On app load, if a token exists we call GET /auth/me to refresh the user profile.
+ */
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(() =>
-    safeParse(localStorage.getItem("user"))
-  );
+  const [user, setUser] = useState(() => {
+    const saved = localStorage.getItem(AUTH_STORAGE.USER);
+    return saved ? JSON.parse(saved) : null;
+  });
+  const [loading, setLoading] = useState(true);
 
-  const [token, setToken] = useState(
-    localStorage.getItem("token") || null
-  );
+  const persistAuth = (token, userData) => {
+    localStorage.setItem(AUTH_STORAGE.TOKEN, token);
+    localStorage.setItem(AUTH_STORAGE.USER, JSON.stringify(userData));
+    setUser(userData);
+  };
+
+  const logout = useCallback(() => {
+    localStorage.removeItem(AUTH_STORAGE.TOKEN);
+    localStorage.removeItem(AUTH_STORAGE.USER);
+    setUser(null);
+  }, []);
 
   const login = async (email, password) => {
-    const res = await api.post("/auth/login", { email, password });
+    const { data } = await authAPI.login({ email, password });
+    persistAuth(data.token, data.user);
+    return data.user;
+  };
 
-    const data = res.data;
+  const register = async (username, email, password) => {
+    const { data } = await authAPI.register({ username, email, password });
+    persistAuth(data.token, data.user);
+    return data.user;
+  };
 
-    if (data?.token) {
-      localStorage.setItem("token", data.token);
-      setToken(data.token);
+  // Restore session on mount when token exists
+  useEffect(() => {
+    const token = localStorage.getItem(AUTH_STORAGE.TOKEN);
+    if (!token) {
+      setLoading(false);
+      return;
     }
 
-    if (data?.user) {
-      localStorage.setItem("user", JSON.stringify(data.user));
-      setUser(data.user);
-    }
-
-    return data;
-  };
-
-  const register = async (payload) => {
-    const res = await api.post("/auth/register", payload);
-    return res.data;
-  };
-
-  const logout = () => {
-    localStorage.removeItem("user");
-    localStorage.removeItem("token");
-    setUser(null);
-    setToken(null);
-  };
+    authAPI
+      .getMe()
+      .then(({ data }) => {
+        setUser(data.user);
+        localStorage.setItem(AUTH_STORAGE.USER, JSON.stringify(data.user));
+      })
+      .catch(() => logout())
+      .finally(() => setLoading(false));
+  }, [logout]);
 
   return (
-    <AuthContext.Provider value={{ user, token, login, register, logout }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        login,
+        register,
+        logout,
+        isAdmin: user?.role === 'admin',
+        isAuthenticated: Boolean(user),
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
 };
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error('useAuth must be used within AuthProvider');
+  return ctx;
+};

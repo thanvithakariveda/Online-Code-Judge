@@ -1,19 +1,10 @@
-import express from 'express';
-import {
-  createSubmission,
-  getMySubmissions,
-  getSubmissionsByProblem,
-  getSubmissionById,
-} from '../controllers/submission.controller.js';
-import { protect } from '../middleware/auth.js';
+import express from "express";
+import { protect } from "../middleware/auth.js";
+import { getMySubmissions } from "../controllers/submissionController.js";
 
 const router = express.Router();
 
-router.use(protect);
-
-router.post('/', createSubmission);
-router.get('/me', getMySubmissions);
-router.get('/problem/:problemId', getSubmissionsByProblem);
-router.get('/:id', getSubmissionById);
+// 🔥 MUST HAVE protect HERE
+router.get("/me", protect, getMySubmissions);
 
 export default router;

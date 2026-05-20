@@ -1,29 +1,33 @@
-import React from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route } from 'react-router-dom';
+import PageShell from './PageShell.jsx';
+import { ROUTES } from '../constants/routes.js';
 
-import Home from "../pages/Home";
-import Login from "../pages/Login";
-import Register from "../pages/Register";
-import Dashboard from "../pages/Dashboard";
+import Home from '../pages/Home.jsx';
+import Login from '../pages/Login.jsx';
+import Register from '../pages/Register.jsx';
+import Problems from '../pages/Problems.jsx';
+import ProblemDetail from '../pages/ProblemDetail.jsx';
+import Dashboard from '../pages/Dashboard.jsx';
+import Leaderboard from '../pages/Leaderboard.jsx';
+import Submissions from '../pages/Submissions.jsx';
+import AdminProblems from '../pages/AdminProblems.jsx';
 
-import ProtectedRoute from "../components/ProtectedRoute.jsx";
-
+/** Central route table — all paths and guards in one place */
 export default function AppRoutes() {
   return (
     <Routes>
-      <Route path="/" element={<Home />} />
+      <Route path={ROUTES.HOME} element={<PageShell sidebar={false}><Home /></PageShell>} />
 
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
+      <Route path={ROUTES.LOGIN} element={<PageShell sidebar={false} guest><Login /></PageShell>} />
+      <Route path={ROUTES.REGISTER} element={<PageShell sidebar={false} guest><Register /></PageShell>} />
 
-      <Route
-        path="/dashboard"
-        element={
-          <ProtectedRoute>
-            <Dashboard />
-          </ProtectedRoute>
-        }
-      />
+      <Route path={ROUTES.PROBLEMS} element={<PageShell><Problems /></PageShell>} />
+      <Route path={ROUTES.PROBLEM} element={<PageShell sidebar={false}><ProblemDetail /></PageShell>} />
+      <Route path={ROUTES.LEADERBOARD} element={<PageShell><Leaderboard /></PageShell>} />
+
+      <Route path={ROUTES.DASHBOARD} element={<PageShell protect><Dashboard /></PageShell>} />
+      <Route path={ROUTES.SUBMISSIONS} element={<PageShell protect><Submissions /></PageShell>} />
+      <Route path={ROUTES.ADMIN_PROBLEMS} element={<PageShell protect admin><AdminProblems /></PageShell>} />
     </Routes>
   );
 }
