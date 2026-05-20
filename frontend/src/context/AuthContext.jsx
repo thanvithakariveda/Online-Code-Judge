@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useState } from "react";
 import api from "../api/axios.js";
 
 const AuthContext = createContext();
@@ -22,26 +22,30 @@ export const AuthProvider = ({ children }) => {
 
   const isAuthenticated = !!token;
 
-  // LOGIN
+  // LOGIN (FIXED)
   const login = async (email, password) => {
-    const res = await api.post("/auth/login", { email, password });
+    try {
+      const res = await api.post("/auth/login", { email, password });
 
-    const data = res.data?.data || res.data;
+      const data = res.data;
 
-    const loggedUser = data.user;
-    const accessToken = data.token;
+      const loggedUser = data?.user;
+      const accessToken = data?.token;
 
-    if (loggedUser) {
-      localStorage.setItem("user", JSON.stringify(loggedUser));
-      setUser(loggedUser);
+      if (loggedUser) {
+        localStorage.setItem("user", JSON.stringify(loggedUser));
+        setUser(loggedUser);
+      }
+
+      if (accessToken) {
+        localStorage.setItem("token", accessToken);
+        setToken(accessToken);
+      }
+
+      return data;
+    } catch (err) {
+      throw err;
     }
-
-    if (accessToken) {
-      localStorage.setItem("token", accessToken);
-      setToken(accessToken);
-    }
-
-    return data;
   };
 
   // REGISTER

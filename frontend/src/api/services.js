@@ -7,11 +7,11 @@ export const authAPI = {
   getMe: () => api.get("/auth/me"),
 };
 
-// PROBLEMS (FIXED SAFE RETURN)
+// PROBLEMS
 export const problemsAPI = {
   getAll: async (params) => {
     const res = await api.get("/problems", { params });
-    return res.data?.data || [];
+    return res.data || {};
   },
 };
 
@@ -19,7 +19,7 @@ export const problemsAPI = {
 export const submissionsAPI = {
   getMine: async () => {
     const res = await api.get("/submissions/me");
-    return res.data?.data || [];
+    return res.data || {};
   },
 };
 
@@ -27,6 +27,6 @@ export const submissionsAPI = {
 export const leaderboardAPI = {
   get: async () => {
     const res = await api.get("/leaderboard");
-    return res.data?.data || [];
+    return res.data || {};
   },
 };
