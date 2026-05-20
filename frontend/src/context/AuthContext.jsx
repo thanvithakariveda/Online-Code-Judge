@@ -3,58 +3,38 @@ import api from "../api/axios.js";
 
 const AuthContext = createContext();
 
-const safeParse = (value) => {
-  try {
-    return value ? JSON.parse(value) : null;
-  } catch {
-    return null;
-  }
-};
-
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(() =>
-    safeParse(localStorage.getItem("user"))
+  const [user, setUser] = useState(
+    JSON.parse(localStorage.getItem("user"))
   );
 
   const [token, setToken] = useState(
-    localStorage.getItem("token") || null
+    localStorage.getItem("token")
   );
 
-  const isAuthenticated = !!token;
-
-  // LOGIN (FIXED)
   const login = async (email, password) => {
-    try {
-      const res = await api.post("/auth/login", { email, password });
+    const res = await api.post("/auth/login", { email, password });
 
-      const data = res.data;
+    const data = res.data;
 
-      const loggedUser = data?.user;
-      const accessToken = data?.token;
-
-      if (loggedUser) {
-        localStorage.setItem("user", JSON.stringify(loggedUser));
-        setUser(loggedUser);
-      }
-
-      if (accessToken) {
-        localStorage.setItem("token", accessToken);
-        setToken(accessToken);
-      }
-
-      return data;
-    } catch (err) {
-      throw err;
+    if (data?.token) {
+      localStorage.setItem("token", data.token);
+      setToken(data.token);
     }
+
+    if (data?.user) {
+      localStorage.setItem("user", JSON.stringify(data.user));
+      setUser(data.user);
+    }
+
+    return data;
   };
 
-  // REGISTER
   const register = async (payload) => {
     const res = await api.post("/auth/register", payload);
     return res.data;
   };
 
-  // LOGOUT
   const logout = () => {
     localStorage.removeItem("user");
     localStorage.removeItem("token");
@@ -64,14 +44,7 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider
-      value={{
-        user,
-        token,
-        login,
-        register,
-        logout,
-        isAuthenticated,
-      }}
+      value={{ user, token, login, register, logout }}
     >
       {children}
     </AuthContext.Provider>
