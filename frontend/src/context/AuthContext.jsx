@@ -3,7 +3,7 @@ import api from "../api/axios.js";
 
 const AuthContext = createContext();
 
-// ✅ SAFE PARSE (PREVENTS CRASH)
+// ================= SAFE PARSER =================
 const safeParse = (value) => {
   try {
     if (!value || value === "undefined" || value === "null") return null;
@@ -22,6 +22,16 @@ export const AuthProvider = ({ children }) => {
     localStorage.getItem("token") || null
   );
 
+  // ================= SYNC AXIOS TOKEN =================
+  useEffect(() => {
+    if (token) {
+      api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+    } else {
+      delete api.defaults.headers.common["Authorization"];
+    }
+  }, [token]);
+
+  // ================= LOGIN =================
   const login = async (email, password) => {
     const res = await api.post("/auth/login", { email, password });
 
@@ -40,16 +50,18 @@ export const AuthProvider = ({ children }) => {
     return data;
   };
 
+  // ================= REGISTER =================
   const register = async (payload) => {
     const res = await api.post("/auth/register", payload);
     return res.data;
   };
 
+  // ================= LOGOUT =================
   const logout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    setToken(null);
     setUser(null);
+    setToken(null);
   };
 
   return (

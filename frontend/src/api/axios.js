@@ -27,10 +27,7 @@ function ensureRelativePath(url) {
  * can keep using response.data.token, response.data.problems, etc.
  */
 function unwrapResponse(body) {
-  if (body && typeof body === "object" && body.success === true && body.data !== undefined) {
-    return { success: body.success, message: body.message, ...body.data };
-  }
-  return body;
+  return body?.data || body;
 }
 
 api.interceptors.request.use((config) => {
