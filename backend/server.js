@@ -19,7 +19,7 @@ const PORT = process.env.PORT || 5000;
 connectDB();
 
 // CORS: allow CLIENT_URL(s) and any localhost Vite port in development
-const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173')
+const allowedOrigins = (process.env.CLIENT_URL || "online-code-judge-vwgb.vercel.app")
   .split(',')
   .map((o) => o.trim())
   .filter(Boolean);
