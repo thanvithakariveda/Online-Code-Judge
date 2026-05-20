@@ -1,0 +1,22 @@
+# Render.com deployment blueprint
+services:
+  - type: web
+    name: online-code-judge-api
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CLIENT_URL
+        sync: false
+      - key: JUDGE0_API_URL
+        sync: false
+      - key: JUDGE0_API_KEY
+        sync: false
+      - key: JUDGE0_HOST
+        sync: false
