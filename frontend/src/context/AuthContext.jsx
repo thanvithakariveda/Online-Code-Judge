@@ -3,7 +3,7 @@ import api from "../api/axios.js";
 
 const AuthContext = createContext();
 
-const safeJSONParse = (value) => {
+const safeParse = (value) => {
   try {
     return value ? JSON.parse(value) : null;
   } catch {
@@ -13,35 +13,40 @@ const safeJSONParse = (value) => {
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() =>
-    safeJSONParse(localStorage.getItem("user"))
+    safeParse(localStorage.getItem("user"))
   );
 
-  const [token, setToken] = useState(() =>
+  const [token, setToken] = useState(
     localStorage.getItem("token") || null
   );
+
+  const isAuthenticated = !!token;
 
   // LOGIN
   const login = async (email, password) => {
     const res = await api.post("/auth/login", { email, password });
 
-    const { user, token } = res.data;
+    const data = res.data?.data || res.data;
 
-    if (user) {
-      localStorage.setItem("user", JSON.stringify(user));
-      setUser(user);
+    const loggedUser = data.user;
+    const accessToken = data.token;
+
+    if (loggedUser) {
+      localStorage.setItem("user", JSON.stringify(loggedUser));
+      setUser(loggedUser);
     }
 
-    if (token) {
-      localStorage.setItem("token", token);
-      setToken(token);
+    if (accessToken) {
+      localStorage.setItem("token", accessToken);
+      setToken(accessToken);
     }
 
-    return res.data;
+    return data;
   };
 
   // REGISTER
-  const register = async (data) => {
-    const res = await api.post("/auth/register", data);
+  const register = async (payload) => {
+    const res = await api.post("/auth/register", payload);
     return res.data;
   };
 
@@ -53,17 +58,17 @@ export const AuthProvider = ({ children }) => {
     setToken(null);
   };
 
-  const value = {
-    user,
-    token,
-    login,
-    register,
-    logout,
-    isAuthenticated: !!token,
-  };
-
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider
+      value={{
+        user,
+        token,
+        login,
+        register,
+        logout,
+        isAuthenticated,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
