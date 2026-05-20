@@ -4,43 +4,49 @@ import dotenv from "dotenv";
 
 import { connectDB } from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
-import problemRoutes from "./routes/problemRoutes.js";
+import problemRoutes from "./routes/problem.routes.js"; // ✅ FIXED NAME
 
 dotenv.config();
 
-// DB connect
-connectDB().catch((err) => {
-  console.error("DB Error:", err);
-});
+// Connect DB first
+connectDB();
 
 const app = express();
 
-// CORS
+// ---------------- CORS ----------------
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173",
-      "https://online-code-judge-steel.vercel.app"
-    ],
+    origin: process.env.CLIENT_URL?.split(",") || [],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
   })
 );
 
+// Handle preflight
+app.options("*", cors());
+
+// ---------------- MIDDLEWARE ----------------
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// Routes
+// ---------------- ROUTES ----------------
 app.use("/auth", authRoutes);
-app.use("/problems", problemRoutes);
+app.use("/problems", problemRoutes); // ✅ IMPORTANT FIX
 
-// Health check
+// ---------------- HEALTH CHECK ----------------
 app.get("/", (req, res) => {
-  res.send("Backend running 🚀");
+  res.send("Backend running");
 });
 
-// Error handler
+// ---------------- ERROR HANDLER ----------------
 app.use((err, req, res, next) => {
-  console.error(err);
-  res.status(500).json({ message: "Server Error" });
+  console.error("ERROR:", err);
+
+  res.status(500).json({
+    success: false,
+    message: err.message || "Internal Server Error",
+  });
 });
 
 const PORT = process.env.PORT || 5000;
