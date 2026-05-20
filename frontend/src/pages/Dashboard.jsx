@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
 
-import LoadingSpinner from "../components/LoadingSpinner.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import { authAPI, submissionsAPI, problemsAPI } from "../api/services.js";
 
@@ -36,18 +35,19 @@ export default function Dashboard() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <LoadingSpinner />;
+  if (loading) return <div>Loading...</div>;
 
   return (
     <div>
       <h1>Dashboard</h1>
+
       <p>Welcome {user?.username}</p>
 
       <p>Score: {user?.score || 0}</p>
       <p>Solved: {stats.solved}</p>
       <p>Total Problems: {stats.problems}</p>
 
-      <Link to="/problems">Go Problems</Link>
+      <Link to="/problems">Problems</Link>
     </div>
   );
 }
