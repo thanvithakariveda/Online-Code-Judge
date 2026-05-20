@@ -11,36 +11,37 @@ const app = express();
 app.use(
   cors({
     origin: [
-      "online-code-judge-steel.vercel.app",
-      "http://localhost:5173"
+      "https://online-code-judge-steel.vercel.app",
+      "http://localhost:5173",
     ],
-    credentials: true
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
   })
 );
 
-// handle browser preflight
 app.options("*", cors());
 
 app.use(express.json());
-app.use(express.urlencoded({ extended:true }));
+app.use(express.urlencoded({ extended: true }));
 
 app.use("/auth", authRoutes);
 
-app.get("/",(req,res)=>{
-   res.send("Backend running");
+app.get("/", (req, res) => {
+  res.send("Backend running");
 });
 
-app.use((err,req,res,next)=>{
-   console.log("ERROR:",err);
+app.use((err, req, res, next) => {
+  console.log("ERROR:", err);
 
-   res.status(500).json({
-      success:false,
-      message:"Internal Server Error"
-   });
+  res.status(500).json({
+    success: false,
+    message: "Internal Server Error",
+  });
 });
 
-const PORT=process.env.PORT || 5000;
+const PORT = process.env.PORT || 5000;
 
-app.listen(PORT,()=>{
-   console.log(`Server running on ${PORT}`);
+app.listen(PORT, () => {
+  console.log(`Server running on ${PORT}`);
 });
