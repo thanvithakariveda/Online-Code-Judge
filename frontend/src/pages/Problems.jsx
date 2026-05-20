@@ -21,13 +21,20 @@ export default function Problems() {
           search: search || undefined,
         });
 
-        // 🔥 FIX: handle both API response styles safely
-        const data = res?.data?.problems || res?.data || [];
+        // 🔥 SAFE FIX: handle ALL backend formats
+        const raw = res?.data?.data;
 
-        setProblems(Array.isArray(data) ? data : []);
+        const finalData =
+          raw?.problems ||   // case: { data: { problems: [] } }
+          raw ||             // case: { data: [] }
+          [];                // fallback
+
+        setProblems(Array.isArray(finalData) ? finalData : []);
+
       } catch (err) {
         console.error(err);
         toast.error('Failed to load problems');
+        setProblems([]); // IMPORTANT fallback
       } finally {
         setLoading(false);
       }
@@ -76,62 +83,58 @@ export default function Problems() {
               <tr>
                 <th className="text-left p-4">#</th>
                 <th className="text-left p-4">Title</th>
-                <th className="text-left p-4 hidden sm:table-cell">
-                  Difficulty
-                </th>
-                <th className="text-left p-4 hidden md:table-cell">
-                  Acceptance
-                </th>
+                <th className="text-left p-4 hidden sm:table-cell">Difficulty</th>
+                <th className="text-left p-4 hidden md:table-cell">Acceptance</th>
               </tr>
             </thead>
 
             <tbody>
-              {problems.map((p, i) => {
-                const rate =
-                  p.submissionCount > 0
-                    ? Math.round((p.acceptedCount / p.submissionCount) * 100)
-                    : 0;
+              {Array.isArray(problems) &&
+                problems.map((p, i) => {
+                  const rate =
+                    p.submissionCount > 0
+                      ? Math.round((p.acceptedCount / p.submissionCount) * 100)
+                      : 0;
 
-                return (
-                  <tr
-                    key={p._id}
-                    className="border-b border-white/5 hover:bg-white/5 transition"
-                  >
-                    <td className="p-4 text-gray-500">{i + 1}</td>
+                  return (
+                    <tr
+                      key={p._id}
+                      className="border-b border-white/5 hover:bg-white/5 transition"
+                    >
+                      <td className="p-4 text-gray-500">{i + 1}</td>
 
-                    <td className="p-4">
-                      <Link
-                        to={`/problems/${p._id}`}
-                        className="text-cyan-400 hover:underline font-medium"
-                      >
-                        {p.title}
-                      </Link>
+                      <td className="p-4">
+                        <Link
+                          to={`/problems/${p._id}`}
+                          className="text-cyan-400 hover:underline font-medium"
+                        >
+                          {p.title}
+                        </Link>
+                        <p className="text-xs text-gray-500 mt-1 sm:hidden">
+                          {p.difficulty}
+                        </p>
+                      </td>
 
-                      <p className="text-xs text-gray-500 mt-1 sm:hidden">
-                        {p.difficulty}
-                      </p>
-                    </td>
+                      <td className="p-4 hidden sm:table-cell">
+                        <span
+                          className={`px-2 py-0.5 rounded text-xs ${
+                            DIFFICULTY_COLORS[p.difficulty]
+                          }`}
+                        >
+                          {p.difficulty}
+                        </span>
+                      </td>
 
-                    <td className="p-4 hidden sm:table-cell">
-                      <span
-                        className={`px-2 py-0.5 rounded text-xs ${
-                          DIFFICULTY_COLORS[p.difficulty]
-                        }`}
-                      >
-                        {p.difficulty}
-                      </span>
-                    </td>
-
-                    <td className="p-4 hidden md:table-cell text-gray-400">
-                      {rate}%
-                    </td>
-                  </tr>
-                );
-              })}
+                      <td className="p-4 hidden md:table-cell text-gray-400">
+                        {rate}%
+                      </td>
+                    </tr>
+                  );
+                })}
             </tbody>
           </table>
 
-          {problems.length === 0 && (
+          {(!problems || problems.length === 0) && (
             <p className="p-8 text-center text-gray-500">
               No problems found.
             </p>
