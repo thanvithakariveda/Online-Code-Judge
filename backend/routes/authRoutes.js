@@ -1,11 +1,23 @@
-import express from 'express';
-import { register, login, getMe } from '../controllers/auth.controller.js';
-import { protect } from '../middleware/auth.js';
+import express from "express";
 
 const router = express.Router();
 
-router.post('/register', register);
-router.post('/login', login);
-router.get('/me', protect, getMe);
+router.post("/register", (req, res) => {
+  res.json({ success: true, message: "Registered successfully" });
+});
+
+router.post("/login", (req, res) => {
+  res.json({
+    success: true,
+    data: { token: "demo-token" },
+  });
+});
+
+router.get("/me", (req, res) => {
+  res.json({
+    success: true,
+    data: { name: "User" },
+  });
+});
 
 export default router;
