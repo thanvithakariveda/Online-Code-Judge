@@ -1,10 +1,11 @@
 export function getApiBaseUrl() {
-  const raw = (import.meta.env.VITE_API_URL || "").trim();
+  const raw = import.meta.env.VITE_API_URL;
 
-  if (!raw) {
-    return import.meta.env.DEV
-      ? "http://localhost:5000"
-      : "";
+  // DEFAULT SAFE VALUE (IMPORTANT FIX)
+  const fallback = "https://online-code-judge-2.onrender.com";
+
+  if (!raw || raw.trim() === "") {
+    return fallback;
   }
 
   return raw.replace(/\/+$/, "");

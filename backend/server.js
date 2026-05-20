@@ -4,57 +4,43 @@ import dotenv from "dotenv";
 
 import { connectDB } from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
+import problemRoutes from "./routes/problemRoutes.js";
 
 dotenv.config();
 
-// Connect MongoDB first
-connectDB();
+// DB connect
+connectDB().catch((err) => {
+  console.error("DB Error:", err);
+});
 
 const app = express();
 
+// CORS
 app.use(
   cors({
-    origin: process.env.CLIENT_URL.split(","),
-
-    methods: [
-      "GET",
-      "POST",
-      "PUT",
-      "DELETE",
-      "OPTIONS"
+    origin: [
+      "http://localhost:5173",
+      "https://online-code-judge-steel.vercel.app"
     ],
-
-    allowedHeaders: [
-      "Content-Type",
-      "Authorization"
-    ],
-
-    credentials: true
+    credentials: true,
   })
 );
 
-// Handle browser preflight requests
-app.options("*", cors());
-
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
 // Routes
 app.use("/auth", authRoutes);
+app.use("/problems", problemRoutes);
 
 // Health check
 app.get("/", (req, res) => {
-  res.send("Backend running");
+  res.send("Backend running 🚀");
 });
 
-// Global error handler
+// Error handler
 app.use((err, req, res, next) => {
-  console.error("ERROR:", err);
-
-  res.status(500).json({
-    success: false,
-    message: err.message || "Internal Server Error"
-  });
+  console.error(err);
+  res.status(500).json({ message: "Server Error" });
 });
 
 const PORT = process.env.PORT || 5000;
