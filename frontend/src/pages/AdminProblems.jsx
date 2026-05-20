@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
-import Layout from '../components/Layout.jsx';
 import LoadingSpinner from '../components/LoadingSpinner.jsx';
-import AdminRoute from '../components/AdminRoute.jsx';
 import { problemsAPI } from '../api/services.js';
 
 const emptyForm = {
@@ -18,7 +16,7 @@ const emptyForm = {
   hiddenTestCases: [{ input: '', output: '' }],
 };
 
-function AdminContent() {
+export default function AdminProblems() {
   const [problems, setProblems] = useState([]);
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState(null);
@@ -26,7 +24,11 @@ function AdminContent() {
   const [saving, setSaving] = useState(false);
 
   const load = () => {
-    problemsAPI.getAll().then(({ data }) => setProblems(data.problems)).finally(() => setLoading(false));
+    problemsAPI
+      .getAll()
+      .then(({ data }) => setProblems(data.problems))
+      .catch(() => toast.error('Failed to load problems'))
+      .finally(() => setLoading(false));
   };
 
   useEffect(() => load(), []);
@@ -72,22 +74,26 @@ function AdminContent() {
   };
 
   const handleEdit = async (id) => {
-    const { data } = await problemsAPI.getById(id);
-    const p = data.problem;
-    setEditingId(id);
-    setForm({
-      title: p.title,
-      description: p.description,
-      constraints: p.constraints || '',
-      inputFormat: p.inputFormat || '',
-      outputFormat: p.outputFormat || '',
-      sampleInput: p.sampleInput || '',
-      sampleOutput: p.sampleOutput || '',
-      difficulty: p.difficulty,
-      tags: (p.tags || []).join(', '),
-      hiddenTestCases: p.hiddenTestCases?.length ? p.hiddenTestCases : [{ input: '', output: '' }],
-    });
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    try {
+      const { data } = await problemsAPI.getById(id);
+      const p = data.problem;
+      setEditingId(id);
+      setForm({
+        title: p.title,
+        description: p.description,
+        constraints: p.constraints || '',
+        inputFormat: p.inputFormat || '',
+        outputFormat: p.outputFormat || '',
+        sampleInput: p.sampleInput || '',
+        sampleOutput: p.sampleOutput || '',
+        difficulty: p.difficulty,
+        tags: (p.tags || []).join(', '),
+        hiddenTestCases: p.hiddenTestCases?.length ? p.hiddenTestCases : [{ input: '', output: '' }],
+      });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch {
+      toast.error('Failed to load problem for editing');
+    }
   };
 
   const handleDelete = async (id) => {
@@ -131,14 +137,23 @@ function AdminContent() {
               <textarea placeholder="Output" className="input-field font-mono text-xs" value={tc.output} onChange={(e) => handleTestCase(i, 'output', e.target.value)} />
             </div>
           ))}
-          <button type="button" onClick={addTestCase} className="text-sm text-cyan-400">+ Add test case</button>
+          <button type="button" onClick={addTestCase} className="text-sm text-cyan-400">
+            + Add test case
+          </button>
         </fieldset>
 
         <button type="submit" disabled={saving} className="gradient-btn">
           {saving ? 'Saving...' : editingId ? 'Update Problem' : 'Create Problem'}
         </button>
         {editingId && (
-          <button type="button" onClick={() => { setEditingId(null); setForm(emptyForm); }} className="ml-3 text-sm text-gray-400">
+          <button
+            type="button"
+            onClick={() => {
+              setEditingId(null);
+              setForm(emptyForm);
+            }}
+            className="ml-3 text-sm text-gray-400"
+          >
             Cancel edit
           </button>
         )}
@@ -152,26 +167,25 @@ function AdminContent() {
           <ul className="space-y-2">
             {problems.map((p) => (
               <li key={p._id} className="flex flex-wrap justify-between items-center gap-2 py-2 border-b border-white/5">
-                <span>{p.title} <span className="text-gray-500 text-xs">({p.difficulty})</span></span>
+                <span>
+                  {p.title} <span className="text-gray-500 text-xs">({p.difficulty})</span>
+                </span>
                 <span className="flex gap-2">
-                  <button onClick={() => handleEdit(p._id)} className="text-sm text-cyan-400">Edit</button>
-                  <button onClick={() => handleDelete(p._id)} className="text-sm text-red-400">Delete</button>
+                  <button onClick={() => handleEdit(p._id)} className="text-sm text-cyan-400">
+                    Edit
+                  </button>
+                  <button onClick={() => handleDelete(p._id)} className="text-sm text-red-400">
+                    Delete
+                  </button>
                 </span>
               </li>
             ))}
           </ul>
+          {problems.length === 0 && (
+            <p className="text-gray-500 text-sm py-4">No problems yet. Create one above.</p>
+          )}
         </section>
       )}
     </>
-  );
-}
-
-export default function AdminProblems() {
-  return (
-    <AdminRoute>
-      <Layout>
-        <AdminContent />
-      </Layout>
-    </AdminRoute>
   );
 }

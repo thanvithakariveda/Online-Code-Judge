@@ -1,7 +1,8 @@
 import Problem from '../models/Problem.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { sendSuccess, sendError } from '../utils/apiResponse.js';
+import { pickProblemFields, validateProblemBody } from '../validators/problem.validator.js';
 
-// Strip hidden test cases for public API responses
 const sanitizeProblem = (problem, includeHidden = false) => {
   const obj = problem.toObject ? problem.toObject() : { ...problem };
   if (!includeHidden) delete obj.hiddenTestCases;
@@ -25,51 +26,92 @@ export const getProblems = asyncHandler(async (req, res) => {
     .select('-hiddenTestCases')
     .sort({ createdAt: -1 });
 
-  res.json({ success: true, count: problems.length, problems });
+  sendSuccess(res, {
+    message: 'Problems fetched successfully',
+    data: { count: problems.length, problems },
+  });
 });
 
 export const getProblemById = asyncHandler(async (req, res) => {
   const isAdmin = req.user?.role === 'admin';
   const query = Problem.findById(req.params.id);
   if (!isAdmin) query.select('-hiddenTestCases');
+
   const problem = await query;
   if (!problem) {
-    return res.status(404).json({ success: false, message: 'Problem not found.' });
+    return sendError(res, { message: 'Problem not found.', statusCode: 404 });
   }
-  res.json({ success: true, problem });
+
+  sendSuccess(res, {
+    message: 'Problem fetched successfully',
+    data: { problem },
+  });
 });
 
 export const getProblemBySlug = asyncHandler(async (req, res) => {
   const problem = await Problem.findOne({ slug: req.params.slug }).select('-hiddenTestCases');
+
   if (!problem) {
-    return res.status(404).json({ success: false, message: 'Problem not found.' });
+    return sendError(res, { message: 'Problem not found.', statusCode: 404 });
   }
-  res.json({ success: true, problem });
+
+  sendSuccess(res, {
+    message: 'Problem fetched successfully',
+    data: { problem },
+  });
 });
 
 export const createProblem = asyncHandler(async (req, res) => {
-  const problem = await Problem.create({ ...req.body, createdBy: req.user._id });
-  res.status(201).json({ success: true, problem: sanitizeProblem(problem, true) });
+  const { errors, data } = validateProblemBody(req.body);
+  if (errors.length) {
+    return sendError(res, { message: errors[0], statusCode: 400 });
+  }
+
+  const problem = await Problem.create({ ...data, createdBy: req.user._id });
+
+  sendSuccess(res, {
+    message: 'Problem created successfully',
+    data: { problem: sanitizeProblem(problem, true) },
+    statusCode: 201,
+  });
 });
 
 export const updateProblem = asyncHandler(async (req, res) => {
-  let problem = await Problem.findById(req.params.id);
-  if (!problem) {
-    return res.status(404).json({ success: false, message: 'Problem not found.' });
+  const existing = await Problem.findById(req.params.id);
+  if (!existing) {
+    return sendError(res, { message: 'Problem not found.', statusCode: 404 });
   }
 
-  problem = await Problem.findByIdAndUpdate(req.params.id, req.body, {
+  const { errors, data } = validateProblemBody(req.body, { partial: true });
+  if (errors.length) {
+    return sendError(res, { message: errors[0], statusCode: 400 });
+  }
+
+  // Never allow overwriting internal counters via API
+  delete data.submissionCount;
+  delete data.acceptedCount;
+  delete data.createdBy;
+
+  const problem = await Problem.findByIdAndUpdate(req.params.id, data, {
     new: true,
     runValidators: true,
   });
 
-  res.json({ success: true, problem: sanitizeProblem(problem, true) });
+  sendSuccess(res, {
+    message: 'Problem updated successfully',
+    data: { problem: sanitizeProblem(problem, true) },
+  });
 });
 
 export const deleteProblem = asyncHandler(async (req, res) => {
   const problem = await Problem.findByIdAndDelete(req.params.id);
+
   if (!problem) {
-    return res.status(404).json({ success: false, message: 'Problem not found.' });
+    return sendError(res, { message: 'Problem not found.', statusCode: 404 });
   }
-  res.json({ success: true, message: 'Problem deleted.' });
+
+  sendSuccess(res, {
+    message: 'Problem deleted successfully',
+    data: {},
+  });
 });

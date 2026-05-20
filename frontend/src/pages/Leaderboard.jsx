@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
-import Layout from '../components/Layout.jsx';
 import LoadingSpinner from '../components/LoadingSpinner.jsx';
 import { leaderboardAPI } from '../api/services.js';
 
@@ -17,7 +16,7 @@ export default function Leaderboard() {
   }, []);
 
   return (
-    <Layout>
+    <>
       <header className="mb-6">
         <h1 className="text-2xl font-bold">Leaderboard</h1>
         <p className="text-gray-400 text-sm">Top coders ranked by score (10 pts per unique solve)</p>
@@ -47,9 +46,11 @@ export default function Leaderboard() {
               ))}
             </tbody>
           </table>
-          {board.length === 0 && <p className="p-8 text-center text-gray-500">No rankings yet.</p>}
+          {board.length === 0 && (
+            <p className="p-8 text-center text-gray-500">No rankings yet.</p>
+          )}
         </section>
       )}
-    </Layout>
+    </>
   );
 }

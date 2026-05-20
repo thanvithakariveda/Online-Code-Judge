@@ -7,21 +7,25 @@ import { AuthProvider } from './context/AuthContext.jsx';
 import './index.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
-    <BrowserRouter>
-      <AuthProvider>
-        <App />
-        <Toaster
-          position="top-right"
-          toastOptions={{
-            style: {
-              background: '#1a2234',
-              color: '#f3f4f6',
-              border: '1px solid rgba(255,255,255,0.1)',
-            },
-          }}
-        />
-      </AuthProvider>
-    </BrowserRouter>
-  </React.StrictMode>
+  <BrowserRouter
+    future={{
+      v7_startTransition: true,
+      v7_relativeSplatPath: true,
+    }}
+  >
+    <AuthProvider>
+      <App />
+
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          style: {
+            background: '#1a2234',
+            color: '#f3f4f6',
+            border: '1px solid rgba(255,255,255,0.1)',
+          },
+        }}
+      />
+    </AuthProvider>
+  </BrowserRouter>
 );

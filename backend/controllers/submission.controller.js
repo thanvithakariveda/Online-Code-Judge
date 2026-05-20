@@ -1,30 +1,25 @@
 import Submission from '../models/Submission.js';
 import Problem from '../models/Problem.js';
-import User from '../models/User.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import {
-  runCode,
-  mapVerdict,
-  normalizeOutput,
-  LANGUAGE_IDS,
-} from '../services/judge0.service.js';
-
-const SCORE_PER_SOLVE = 10;
+import { sendSuccess, sendError } from '../utils/apiResponse.js';
+import { validateSubmissionBody } from '../validators/problem.validator.js';
+import { evaluateSubmission, LANGUAGE_IDS } from '../services/submission.service.js';
 
 export const createSubmission = asyncHandler(async (req, res) => {
-  const { problemId, code, language } = req.body;
-
-  if (!problemId || !code || !language) {
-    return res.status(400).json({ success: false, message: 'problemId, code, and language are required.' });
+  const { errors, data } = validateSubmissionBody(req.body);
+  if (errors.length) {
+    return sendError(res, { message: errors[0], statusCode: 400 });
   }
 
+  const { problemId, code, language } = data;
+
   if (!LANGUAGE_IDS[language]) {
-    return res.status(400).json({ success: false, message: 'Unsupported language.' });
+    return sendError(res, { message: 'Unsupported language.', statusCode: 400 });
   }
 
   const problem = await Problem.findById(problemId);
   if (!problem) {
-    return res.status(404).json({ success: false, message: 'Problem not found.' });
+    return sendError(res, { message: 'Problem not found.', statusCode: 404 });
   }
 
   const submission = await Submission.create({
@@ -38,78 +33,19 @@ export const createSubmission = asyncHandler(async (req, res) => {
   problem.submissionCount += 1;
   await problem.save();
 
-  // Evaluate against all test cases (sample + hidden)
-  const testCases = [
-    { input: problem.sampleInput, output: problem.sampleOutput },
-    ...problem.hiddenTestCases,
-  ].filter((tc) => tc.input != null && tc.output != null);
+  const result = await evaluateSubmission({
+    submission,
+    problem,
+    code,
+    language,
+    userId: req.user._id,
+  });
 
-  let finalVerdict = 'Accepted';
-  let runtime = 0;
-  let memory = 0;
-  let errorMessage = '';
-
-  try {
-    for (const testCase of testCases) {
-      const result = await runCode({
-        sourceCode: code,
-        languageId: LANGUAGE_IDS[language],
-        stdin: testCase.input,
-        timeLimit: problem.timeLimit,
-        memoryLimit: problem.memoryLimit,
-      });
-
-      const mapped = mapVerdict(result);
-
-      if (mapped.verdict !== 'Accepted') {
-        finalVerdict = mapped.verdict;
-        errorMessage = mapped.errorMessage || '';
-        runtime = parseFloat(result.time) || 0;
-        memory = result.memory || 0;
-        break;
-      }
-
-      const actual = normalizeOutput(result.stdout);
-      const expected = normalizeOutput(testCase.output);
-
-      if (actual !== expected) {
-        finalVerdict = 'Wrong Answer';
-        errorMessage = 'Output does not match expected for a test case.';
-        runtime = parseFloat(result.time) || 0;
-        memory = result.memory || 0;
-        break;
-      }
-
-      runtime = Math.max(runtime, parseFloat(result.time) || 0);
-      memory = Math.max(memory, result.memory || 0);
-    }
-  } catch (err) {
-    finalVerdict = 'Runtime Error';
-    errorMessage = err.message || 'Execution service unavailable.';
-  }
-
-  submission.verdict = finalVerdict;
-  submission.runtime = runtime;
-  submission.memory = memory;
-  submission.errorMessage = errorMessage;
-  await submission.save();
-
-  if (finalVerdict === 'Accepted') {
-    problem.acceptedCount += 1;
-    await problem.save();
-
-    const user = await User.findById(req.user._id);
-    const alreadySolved = user.solvedProblems.some(
-      (id) => id.toString() === problemId.toString()
-    );
-    if (!alreadySolved) {
-      user.solvedProblems.push(problemId);
-      user.score += SCORE_PER_SOLVE;
-      await user.save();
-    }
-  }
-
-  res.status(201).json({ success: true, submission });
+  sendSuccess(res, {
+    message: 'Submission evaluated successfully',
+    data: { submission: result },
+    statusCode: 201,
+  });
 });
 
 export const getMySubmissions = asyncHandler(async (req, res) => {
@@ -118,7 +54,10 @@ export const getMySubmissions = asyncHandler(async (req, res) => {
     .sort({ createdAt: -1 })
     .limit(100);
 
-  res.json({ success: true, submissions });
+  sendSuccess(res, {
+    message: 'Submissions fetched successfully',
+    data: { submissions },
+  });
 });
 
 export const getSubmissionsByProblem = asyncHandler(async (req, res) => {
@@ -129,7 +68,10 @@ export const getSubmissionsByProblem = asyncHandler(async (req, res) => {
     .sort({ createdAt: -1 })
     .limit(50);
 
-  res.json({ success: true, submissions });
+  sendSuccess(res, {
+    message: 'Submissions fetched successfully',
+    data: { submissions },
+  });
 });
 
 export const getSubmissionById = asyncHandler(async (req, res) => {
@@ -138,15 +80,18 @@ export const getSubmissionById = asyncHandler(async (req, res) => {
     .populate('user', 'username');
 
   if (!submission) {
-    return res.status(404).json({ success: false, message: 'Submission not found.' });
+    return sendError(res, { message: 'Submission not found.', statusCode: 404 });
   }
 
   if (
     submission.user._id.toString() !== req.user._id.toString() &&
     req.user.role !== 'admin'
   ) {
-    return res.status(403).json({ success: false, message: 'Access denied.' });
+    return sendError(res, { message: 'Access denied.', statusCode: 403 });
   }
 
-  res.json({ success: true, submission });
+  sendSuccess(res, {
+    message: 'Submission fetched successfully',
+    data: { submission },
+  });
 });

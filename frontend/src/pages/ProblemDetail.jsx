@@ -1,15 +1,15 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import Layout from '../components/Layout.jsx';
 import CodeEditor from '../components/CodeEditor.jsx';
 import LoadingSpinner from '../components/LoadingSpinner.jsx';
 import { problemsAPI, submissionsAPI } from '../api/services.js';
-import { CODE_TEMPLATES, LANGUAGES } from '../utils/codeTemplates.js';
+import { CODE_TEMPLATES, LANGUAGES } from '../constants/languages.js';
 import { getVerdictClass, DIFFICULTY_COLORS } from '../utils/verdict.js';
-import { useAuth } from '../context/AuthContext.jsx';
+import { useAuth } from '../hooks/useAuth.js';
+import { ROUTES } from '../constants/routes.js';
 
-function ProblemDetailContent() {
+export default function ProblemDetail() {
   const { id } = useParams();
   const { user } = useAuth();
   const [problem, setProblem] = useState(null);
@@ -53,18 +53,31 @@ function ProblemDetailContent() {
   const monacoLang = LANGUAGES.find((l) => l.id === language)?.monaco || 'python';
 
   if (loading) return <LoadingSpinner className="py-20" />;
-  if (!problem) return <p className="text-gray-400">Problem not found.</p>;
+  if (!problem) {
+    return (
+      <section className="text-center py-20">
+        <p className="text-gray-400 mb-4">Problem not found.</p>
+        <Link to={ROUTES.PROBLEMS} className="text-cyan-400 hover:underline">
+          Back to problems
+        </Link>
+      </section>
+    );
+  }
 
   return (
     <section className="grid lg:grid-cols-2 gap-6">
       <article className="glass-card p-6 overflow-y-auto max-h-[calc(100vh-8rem)]">
         <header className="mb-4">
-          <span className={`text-xs px-2 py-0.5 rounded ${DIFFICULTY_COLORS[problem.difficulty]}`}>{problem.difficulty}</span>
+          <span className={`text-xs px-2 py-0.5 rounded ${DIFFICULTY_COLORS[problem.difficulty]}`}>
+            {problem.difficulty}
+          </span>
           <h1 className="text-2xl font-bold mt-2">{problem.title}</h1>
           {problem.tags?.length > 0 && (
             <p className="flex flex-wrap gap-2 mt-2">
               {problem.tags.map((t) => (
-                <span key={t} className="text-xs bg-dark-600 px-2 py-0.5 rounded">{t}</span>
+                <span key={t} className="text-xs bg-dark-600 px-2 py-0.5 rounded">
+                  {t}
+                </span>
               ))}
             </p>
           )}
@@ -97,9 +110,15 @@ function ProblemDetailContent() {
 
       <article className="flex flex-col gap-3">
         <header className="flex flex-wrap items-center gap-3">
-          <select className="input-field max-w-[160px]" value={language} onChange={(e) => onLanguageChange(e.target.value)}>
+          <select
+            className="input-field max-w-[160px]"
+            value={language}
+            onChange={(e) => onLanguageChange(e.target.value)}
+          >
             {LANGUAGES.map((l) => (
-              <option key={l.id} value={l.id}>{l.label}</option>
+              <option key={l.id} value={l.id}>
+                {l.label}
+              </option>
             ))}
           </select>
           <button onClick={handleSubmit} disabled={submitting} className="gradient-btn flex items-center gap-2">
@@ -110,19 +129,15 @@ function ProblemDetailContent() {
         {result && (
           <aside className={`p-4 rounded-lg border ${getVerdictClass(result.verdict)}`}>
             <p className="font-bold text-lg">{result.verdict}</p>
-            {result.runtime != null && <p className="text-sm mt-1">Time: {result.runtime}s · Memory: {result.memory} KB</p>}
+            {result.runtime != null && (
+              <p className="text-sm mt-1">
+                Time: {result.runtime}s · Memory: {result.memory} KB
+              </p>
+            )}
             {result.errorMessage && <p className="text-sm mt-2 opacity-80">{result.errorMessage}</p>}
           </aside>
         )}
       </article>
     </section>
-  );
-}
-
-export default function ProblemDetail() {
-  return (
-    <Layout showSidebar={false}>
-      <ProblemDetailContent />
-    </Layout>
   );
 }

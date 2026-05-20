@@ -1,24 +1,29 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { authAPI } from '../api/services.js';
+import { AUTH_STORAGE } from '../constants/routes.js';
 
 const AuthContext = createContext(null);
 
+/**
+ * Auth state: JWT stored in localStorage, attached to API requests via axios interceptor.
+ * On app load, if a token exists we call GET /auth/me to refresh the user profile.
+ */
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
-    const saved = localStorage.getItem('user');
+    const saved = localStorage.getItem(AUTH_STORAGE.USER);
     return saved ? JSON.parse(saved) : null;
   });
   const [loading, setLoading] = useState(true);
 
   const persistAuth = (token, userData) => {
-    localStorage.setItem('token', token);
-    localStorage.setItem('user', JSON.stringify(userData));
+    localStorage.setItem(AUTH_STORAGE.TOKEN, token);
+    localStorage.setItem(AUTH_STORAGE.USER, JSON.stringify(userData));
     setUser(userData);
   };
 
   const logout = useCallback(() => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    localStorage.removeItem(AUTH_STORAGE.TOKEN);
+    localStorage.removeItem(AUTH_STORAGE.USER);
     setUser(null);
   }, []);
 
@@ -34,32 +39,36 @@ export const AuthProvider = ({ children }) => {
     return data.user;
   };
 
-  // Restore session on mount if token exists
+  // Restore session on mount when token exists
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem(AUTH_STORAGE.TOKEN);
     if (!token) {
       setLoading(false);
       return;
     }
+
     authAPI
       .getMe()
       .then(({ data }) => {
-        const u = {
-          id: data.user._id,
-          username: data.user.username,
-          email: data.user.email,
-          role: data.user.role,
-          score: data.user.score,
-        };
-        setUser(u);
-        localStorage.setItem('user', JSON.stringify(u));
+        setUser(data.user);
+        localStorage.setItem(AUTH_STORAGE.USER, JSON.stringify(data.user));
       })
       .catch(() => logout())
       .finally(() => setLoading(false));
   }, [logout]);
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, isAdmin: user?.role === 'admin' }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        login,
+        register,
+        logout,
+        isAdmin: user?.role === 'admin',
+        isAuthenticated: Boolean(user),
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

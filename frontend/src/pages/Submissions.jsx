@@ -1,13 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import Layout from '../components/Layout.jsx';
 import LoadingSpinner from '../components/LoadingSpinner.jsx';
-import ProtectedRoute from '../components/ProtectedRoute.jsx';
 import { submissionsAPI } from '../api/services.js';
 import { getVerdictClass } from '../utils/verdict.js';
 
-function SubmissionsContent() {
+export default function Submissions() {
   const [submissions, setSubmissions] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -50,7 +48,9 @@ function SubmissionsContent() {
                   </td>
                   <td className="p-4 capitalize">{s.language}</td>
                   <td className="p-4">
-                    <span className={`px-2 py-0.5 rounded text-xs border ${getVerdictClass(s.verdict)}`}>{s.verdict}</span>
+                    <span className={`px-2 py-0.5 rounded text-xs border ${getVerdictClass(s.verdict)}`}>
+                      {s.verdict}
+                    </span>
                   </td>
                   <td className="p-4 text-gray-400">{s.runtime != null ? `${s.runtime}s` : '—'}</td>
                   <td className="p-4 text-gray-500">{new Date(s.createdAt).toLocaleString()}</td>
@@ -58,19 +58,11 @@ function SubmissionsContent() {
               ))}
             </tbody>
           </table>
-          {submissions.length === 0 && <p className="p-8 text-center text-gray-500">No submissions yet.</p>}
+          {submissions.length === 0 && (
+            <p className="p-8 text-center text-gray-500">No submissions yet.</p>
+          )}
         </section>
       )}
     </>
-  );
-}
-
-export default function Submissions() {
-  return (
-    <ProtectedRoute>
-      <Layout>
-        <SubmissionsContent />
-      </Layout>
-    </ProtectedRoute>
   );
 }

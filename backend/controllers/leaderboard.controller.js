@@ -1,9 +1,7 @@
 import User from '../models/User.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { sendSuccess } from '../utils/apiResponse.js';
 
-/**
- * Leaderboard ranked by score (accepted unique problems * 10).
- */
 export const getLeaderboard = asyncHandler(async (req, res) => {
   const limit = Math.min(parseInt(req.query.limit, 10) || 50, 100);
 
@@ -19,5 +17,8 @@ export const getLeaderboard = asyncHandler(async (req, res) => {
     solvedCount: user.solvedProblems?.length || 0,
   }));
 
-  res.json({ success: true, leaderboard });
+  sendSuccess(res, {
+    message: 'Leaderboard fetched successfully',
+    data: { leaderboard },
+  });
 });
