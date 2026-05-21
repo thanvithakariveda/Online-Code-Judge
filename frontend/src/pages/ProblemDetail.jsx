@@ -8,6 +8,7 @@ import { CODE_TEMPLATES, LANGUAGES } from '../constants/languages.js';
 import { getVerdictClass, DIFFICULTY_COLORS } from '../utils/verdict.js';
 import { useAuth } from '../hooks/useAuth.js';
 import { ROUTES } from '../constants/routes.js';
+import { getErrorMessage } from '../api/axios.js';
 
 export default function ProblemDetail() {
   const { id } = useParams();
@@ -44,7 +45,7 @@ export default function ProblemDetail() {
       setResult(data.submission);
       toast.success(`Verdict: ${data.submission.verdict}`);
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Submission failed');
+      toast.error(getErrorMessage(err, 'Submission failed'));
     } finally {
       setSubmitting(false);
     }
