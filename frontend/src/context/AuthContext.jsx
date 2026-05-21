@@ -27,6 +27,16 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   }, []);
 
+  /** Refresh profile from API (e.g. after solving a problem) */
+  const refreshUser = useCallback(async () => {
+    const { data } = await authAPI.getMe();
+    if (data.user) {
+      setUser(data.user);
+      localStorage.setItem(AUTH_STORAGE.USER, JSON.stringify(data.user));
+    }
+    return data.user;
+  }, []);
+
   const login = async (email, password) => {
     const { data } = await authAPI.login({ email, password });
     persistAuth(data.token, data.user);
@@ -65,6 +75,7 @@ export const AuthProvider = ({ children }) => {
         login,
         register,
         logout,
+        refreshUser,
         isAdmin: user?.role === 'admin',
         isAuthenticated: Boolean(user),
       }}
