@@ -11,7 +11,7 @@ export default function Sidebar() {
 
   const links = [
     { to: '/dashboard', label: 'Dashboard', icon: '📊' },
-    { to: '/problems', label: 'Problems', icon: '📝' },
+    { to: '/problems', label: 'Categories', icon: '📝' },
     { to: '/submissions', label: 'Submissions', icon: '📤' },
     { to: '/leaderboard', label: 'Leaderboard', icon: '🏆' },
   ];

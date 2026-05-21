@@ -1,9 +1,19 @@
-import express from "express";
-import { protect } from "../middleware/auth.js";
-import { getMySubmissions } from "../controllers/submission.controller.js";
+import express from 'express';
+import {
+  createSubmission,
+  getMySubmissions,
+  getSubmissionsByProblem,
+  getSubmissionById,
+} from '../controllers/submission.controller.js';
+import { protect } from '../middleware/auth.js';
 
 const router = express.Router();
 
-router.get("/me", protect, getMySubmissions);
+router.use(protect);
+
+router.post('/', createSubmission);
+router.get('/me', getMySubmissions);
+router.get('/problem/:problemId', getSubmissionsByProblem);
+router.get('/:id', getSubmissionById);
 
 export default router;

@@ -2,7 +2,7 @@ import express from 'express';
 import { corsMiddleware } from './config/cors.js';
 import { errorHandler, notFound } from './middleware/errorHandler.js';
 
-import authRoutes from './routes/authRoutes.js';
+import authRoutes from './routes/auth.routes.js';
 import problemRoutes from './routes/problem.routes.js';
 import submissionRoutes from './routes/submission.routes.js';
 import leaderboardRoutes from './routes/leaderboard.routes.js';

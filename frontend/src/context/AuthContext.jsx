@@ -1,76 +1,81 @@
-import { createContext, useContext, useState, useEffect } from "react";
-import api from "../api/axios.js";
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { authAPI } from '../api/services.js';
+import { AUTH_STORAGE } from '../constants/routes.js';
 
-const AuthContext = createContext();
+const AuthContext = createContext(null);
 
-// ================= SAFE PARSER =================
-const safeParse = (value) => {
-  try {
-    if (!value || value === "undefined" || value === "null") return null;
-    return JSON.parse(value);
-  } catch {
-    return null;
-  }
-};
-
+/**
+ * Auth state: JWT stored in localStorage, attached to API requests via axios interceptor.
+ * On app load, if a token exists we call GET /auth/me to refresh the user profile.
+ */
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(() =>
-    safeParse(localStorage.getItem("user"))
-  );
+  const [user, setUser] = useState(() => {
+    const saved = localStorage.getItem(AUTH_STORAGE.USER);
+    return saved ? JSON.parse(saved) : null;
+  });
+  const [loading, setLoading] = useState(true);
 
-  const [token, setToken] = useState(
-    localStorage.getItem("token") || null
-  );
-
-  // ================= SYNC AXIOS TOKEN =================
-  useEffect(() => {
-    if (token) {
-      api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-    } else {
-      delete api.defaults.headers.common["Authorization"];
-    }
-  }, [token]);
-
-  // ================= LOGIN =================
-  const login = async (email, password) => {
-    const res = await api.post("/auth/login", { email, password });
-
-    const data = res.data;
-
-    if (!data?.token || !data?.user) {
-      throw new Error("Invalid login response");
-    }
-
-    localStorage.setItem("token", data.token);
-    localStorage.setItem("user", JSON.stringify(data.user));
-
-    setToken(data.token);
-    setUser(data.user);
-
-    return data;
+  const persistAuth = (token, userData) => {
+    localStorage.setItem(AUTH_STORAGE.TOKEN, token);
+    localStorage.setItem(AUTH_STORAGE.USER, JSON.stringify(userData));
+    setUser(userData);
   };
 
-  // ================= REGISTER =================
-  const register = async (payload) => {
-    const res = await api.post("/auth/register", payload);
-    return res.data;
-  };
-
-  // ================= LOGOUT =================
-  const logout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+  const logout = useCallback(() => {
+    localStorage.removeItem(AUTH_STORAGE.TOKEN);
+    localStorage.removeItem(AUTH_STORAGE.USER);
     setUser(null);
-    setToken(null);
+  }, []);
+
+  const login = async (email, password) => {
+    const { data } = await authAPI.login({ email, password });
+    persistAuth(data.token, data.user);
+    return data.user;
   };
+
+  const register = async (username, email, password) => {
+    const { data } = await authAPI.register({ username, email, password });
+    persistAuth(data.token, data.user);
+    return data.user;
+  };
+
+  // Restore session on mount when token exists
+  useEffect(() => {
+    const token = localStorage.getItem(AUTH_STORAGE.TOKEN);
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+
+    authAPI
+      .getMe()
+      .then(({ data }) => {
+        setUser(data.user);
+        localStorage.setItem(AUTH_STORAGE.USER, JSON.stringify(data.user));
+      })
+      .catch(() => logout())
+      .finally(() => setLoading(false));
+  }, [logout]);
 
   return (
     <AuthContext.Provider
-      value={{ user, token, login, register, logout }}
+      value={{
+        user,
+        loading,
+        login,
+        register,
+        logout,
+        isAdmin: user?.role === 'admin',
+        isAuthenticated: Boolean(user),
+      }}
     >
       {children}
     </AuthContext.Provider>
   );
 };
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error('useAuth must be used within AuthProvider');
+  return ctx;
+};

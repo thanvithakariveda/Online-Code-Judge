@@ -26,7 +26,7 @@ export default function Navbar() {
 
         {/* Center Links */}
         <div className="hidden md:flex items-center gap-6 text-sm">
-          <NavLink to="/problems" className={linkClass}>Problems</NavLink>
+          <NavLink to="/problems" className={linkClass}>Categories</NavLink>
           <NavLink to="/leaderboard" className={linkClass}>Leaderboard</NavLink>
 
           {user && (

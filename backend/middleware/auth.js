@@ -1,36 +1,30 @@
-import jwt from "jsonwebtoken";
-import User from "../models/User.js";
-import { sendError } from "../utils/apiResponse.js";
+import jwt from 'jsonwebtoken';
+import User from '../models/User.js';
+import { sendError } from '../utils/apiResponse.js';
 
+/**
+ * Protect routes — requires valid JWT in Authorization: Bearer <token>.
+ * Attaches req.user (password excluded) on success.
+ */
 export const protect = async (req, res, next) => {
   const authHeader = req.headers.authorization;
 
-  if (!authHeader?.startsWith("Bearer ")) {
-    return sendError(res, {
-      message: "Not authorized",
-      statusCode: 401,
-    });
+  if (!authHeader?.startsWith('Bearer ')) {
+    return sendError(res, { message: 'Not authorized. Please log in.', statusCode: 401 });
   }
 
+  const token = authHeader.split(' ')[1];
+
   try {
-    const token = authHeader.split(" ")[1];
-
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    req.user = await User.findById(decoded.id).select("-password");
+    req.user = await User.findById(decoded.id).select('-password');
 
     if (!req.user) {
-      return sendError(res, {
-        message: "User not found",
-        statusCode: 401,
-      });
+      return sendError(res, { message: 'User no longer exists.', statusCode: 401 });
     }
 
     next();
-  } catch (err) {
-    return sendError(res, {
-      message: "Invalid token",
-      statusCode: 401,
-    });
+  } catch {
+    return sendError(res, { message: 'Invalid or expired token.', statusCode: 401 });
   }
 };

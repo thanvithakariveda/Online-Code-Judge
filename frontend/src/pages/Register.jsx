@@ -6,6 +6,7 @@ import FormField from '../components/forms/FormField.jsx';
 import { useAuth } from '../hooks/useAuth.js';
 import { validateRegisterForm, hasErrors } from '../utils/validation.js';
 import { ROUTES } from '../constants/routes.js';
+import { getErrorMessage } from '../api/axios.js';
 
 export default function Register() {
   const [username, setUsername] = useState('');
@@ -29,7 +30,7 @@ export default function Register() {
       toast.success('Account created!');
       navigate(ROUTES.DASHBOARD);
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Registration failed');
+      toast.error(getErrorMessage(err, 'Registration failed'));
     } finally {
       setLoading(false);
     }

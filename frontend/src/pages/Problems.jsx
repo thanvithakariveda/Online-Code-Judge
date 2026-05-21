@@ -4,6 +4,14 @@ import toast from 'react-hot-toast';
 import LoadingSpinner from '../components/LoadingSpinner.jsx';
 import { problemsAPI } from '../api/services.js';
 import { DIFFICULTY_COLORS } from '../utils/verdict.js';
+import { getErrorMessage } from '../api/axios.js';
+
+const CATEGORIES = [
+  { id: '', label: 'All' },
+  { id: 'Easy', label: 'Easy' },
+  { id: 'Medium', label: 'Medium' },
+  { id: 'Hard', label: 'Hard' },
+];
 
 export default function Problems() {
   const [problems, setProblems] = useState([]);
@@ -19,9 +27,9 @@ export default function Problems() {
           difficulty: difficulty || undefined,
           search: search || undefined,
         });
-        setProblems(data.problems);
-      } catch {
-        toast.error('Failed to load problems');
+        setProblems(data.problems || []);
+      } catch (err) {
+        toast.error(getErrorMessage(err, 'Failed to load problems'));
       } finally {
         setLoading(false);
       }
@@ -33,9 +41,29 @@ export default function Problems() {
   return (
     <>
       <header className="mb-6">
-        <h1 className="text-2xl font-bold">Problems</h1>
-        <p className="text-gray-400 text-sm">Solve challenges and improve your rank</p>
+        <h1 className="text-2xl font-bold">Categories</h1>
+        <p className="text-gray-400 text-sm">Browse problems by difficulty</p>
       </header>
+
+      <section className="mb-4">
+        <p className="text-xs text-gray-500 mb-2 uppercase tracking-wide">Filter by category</p>
+        <div className="flex flex-wrap gap-2">
+          {CATEGORIES.map((cat) => (
+            <button
+              key={cat.id || 'all'}
+              type="button"
+              onClick={() => setDifficulty(cat.id)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition border ${
+                difficulty === cat.id
+                  ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-300'
+                  : 'border-white/10 text-gray-400 hover:bg-white/5'
+              }`}
+            >
+              {cat.label}
+            </button>
+          ))}
+        </div>
+      </section>
 
       <section className="flex flex-wrap gap-3 mb-6">
         <input
@@ -45,16 +73,6 @@ export default function Problems() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-        <select
-          className="input-field max-w-[140px]"
-          value={difficulty}
-          onChange={(e) => setDifficulty(e.target.value)}
-        >
-          <option value="">All levels</option>
-          <option value="Easy">Easy</option>
-          <option value="Medium">Medium</option>
-          <option value="Hard">Hard</option>
-        </select>
       </section>
 
       {loading ? (
@@ -66,7 +84,7 @@ export default function Problems() {
               <tr>
                 <th className="text-left p-4">#</th>
                 <th className="text-left p-4">Title</th>
-                <th className="text-left p-4 hidden sm:table-cell">Difficulty</th>
+                <th className="text-left p-4 hidden sm:table-cell">Category</th>
                 <th className="text-left p-4 hidden md:table-cell">Acceptance</th>
               </tr>
             </thead>
@@ -97,7 +115,7 @@ export default function Problems() {
             </tbody>
           </table>
           {problems.length === 0 && (
-            <p className="p-8 text-center text-gray-500">No problems found.</p>
+            <p className="p-8 text-center text-gray-500">No problems in this category yet.</p>
           )}
         </section>
       )}

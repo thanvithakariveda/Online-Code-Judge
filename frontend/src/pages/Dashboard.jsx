@@ -5,6 +5,7 @@ import LoadingSpinner from '../components/LoadingSpinner.jsx';
 import { useAuth } from '../hooks/useAuth.js';
 import { authAPI, submissionsAPI, problemsAPI } from '../api/services.js';
 import { ROUTES } from '../constants/routes.js';
+import { getErrorMessage } from '../api/axios.js';
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -22,9 +23,9 @@ export default function Dashboard() {
         });
         setError(false);
       })
-      .catch(() => {
+      .catch((err) => {
         setError(true);
-        toast.error('Failed to load dashboard');
+        toast.error(getErrorMessage(err, 'Failed to load dashboard'));
       })
       .finally(() => setLoading(false));
   }, []);
