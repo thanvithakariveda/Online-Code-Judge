@@ -27,7 +27,7 @@ const seed = async () => {
 
   const count = await Problem.countDocuments();
   if (count === 0) {
-    await Problem.create([
+    const samples = [
       {
         title: 'Two Sum',
         description:
@@ -58,7 +58,11 @@ const seed = async () => {
         hiddenTestCases: [{ input: 'abc', output: 'cba' }],
         createdBy: admin._id,
       },
-    ]);
+    ];
+
+    for (const sample of samples) {
+      await Problem.create(sample);
+    }
     console.log('Sample problems seeded.');
   }
 
