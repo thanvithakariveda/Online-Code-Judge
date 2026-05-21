@@ -1,6 +1,7 @@
 import Submission from '../models/Submission.js';
 import Problem from '../models/Problem.js';
 import User from '../models/User.js';
+import { formatUser } from '../utils/userDto.js';
 import {
   runCode,
   LANGUAGE_IDS,
@@ -16,8 +17,8 @@ const SCORE_PER_SOLVE = 10;
 export async function evaluateSubmission({ submission, problem, code, language, userId }) {
   const testCases = [
     { input: problem.sampleInput, output: problem.sampleOutput },
-    ...problem.hiddenTestCases,
-  ].filter((tc) => tc.input != null && tc.output != null);
+    ...(problem.hiddenTestCases || []),
+  ].filter((tc) => tc.input != null && tc.output != null && tc.output !== '');
 
   let finalVerdict = 'Accepted';
   let runtime = 0;
@@ -78,23 +79,36 @@ export async function evaluateSubmission({ submission, problem, code, language, 
   submission.errorMessage = errorMessage;
   await submission.save();
 
+  let scoreAwarded = 0;
+  let userProfile = null;
+
   if (finalVerdict === 'Accepted') {
     problem.acceptedCount += 1;
     await problem.save();
 
     const user = await User.findById(userId);
-    const alreadySolved = user.solvedProblems.some(
-      (id) => id.toString() === problem._id.toString()
+    const problemIdStr = problem._id.toString();
+    const alreadySolved = (user.solvedProblems || []).some(
+      (pid) => pid.toString() === problemIdStr
     );
 
     if (!alreadySolved) {
-      user.solvedProblems.push(problem._id);
-      user.score += SCORE_PER_SOLVE;
-      await user.save();
+      const updated = await User.findByIdAndUpdate(
+        userId,
+        {
+          $push: { solvedProblems: problem._id },
+          $inc: { score: SCORE_PER_SOLVE },
+        },
+        { new: true }
+      );
+      scoreAwarded = SCORE_PER_SOLVE;
+      userProfile = formatUser(updated);
+    } else {
+      userProfile = formatUser(user);
     }
   }
 
-  return submission;
+  return { submission, scoreAwarded, user: userProfile };
 }
 
 export { LANGUAGE_IDS };

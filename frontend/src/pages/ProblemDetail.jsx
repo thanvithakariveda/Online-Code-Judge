@@ -13,7 +13,7 @@ import { getErrorMessage } from '../api/axios.js';
 
 export default function ProblemDetail() {
   const { id } = useParams();
-  const { user } = useAuth();
+  const { user, updateUser, refreshUser } = useAuth();
   const [problem, setProblem] = useState(null);
   const [loading, setLoading] = useState(true);
   const [language, setLanguage] = useState('python');
@@ -48,7 +48,19 @@ export default function ProblemDetail() {
     try {
       const { data } = await submissionsAPI.submit({ problemId: id, code, language });
       setResult(data.submission);
-      toast.success(`Verdict: ${data.submission.verdict}`);
+
+      if (data.submission.verdict === 'Accepted') {
+        if (data.user) updateUser(data.user);
+        else await refreshUser();
+
+        if (data.scoreAwarded > 0) {
+          toast.success(`Accepted! +${data.scoreAwarded} points`);
+        } else {
+          toast.success('Accepted! (already solved — no extra points)');
+        }
+      } else {
+        toast(`Verdict: ${data.submission.verdict}`, { icon: '⚠️' });
+      }
     } catch (err) {
       toast.error(getErrorMessage(err, 'Submission failed'));
     } finally {

@@ -27,15 +27,21 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   }, []);
 
+  /** Update cached user (navbar score, dashboard) */
+  const updateUser = useCallback((userData) => {
+    if (!userData) return;
+    setUser(userData);
+    localStorage.setItem(AUTH_STORAGE.USER, JSON.stringify(userData));
+  }, []);
+
   /** Refresh profile from API (e.g. after solving a problem) */
   const refreshUser = useCallback(async () => {
     const { data } = await authAPI.getMe();
     if (data.user) {
-      setUser(data.user);
-      localStorage.setItem(AUTH_STORAGE.USER, JSON.stringify(data.user));
+      updateUser(data.user);
     }
     return data.user;
-  }, []);
+  }, [updateUser]);
 
   const login = async (email, password) => {
     const { data } = await authAPI.login({ email, password });
@@ -75,6 +81,7 @@ export const AuthProvider = ({ children }) => {
         login,
         register,
         logout,
+        updateUser,
         refreshUser,
         isAdmin: user?.role === 'admin',
         isAuthenticated: Boolean(user),

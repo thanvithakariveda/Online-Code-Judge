@@ -33,7 +33,7 @@ export const createSubmission = asyncHandler(async (req, res) => {
   problem.submissionCount += 1;
   await problem.save();
 
-  const result = await evaluateSubmission({
+  const { submission: result, scoreAwarded, user: updatedUser } = await evaluateSubmission({
     submission,
     problem,
     code,
@@ -42,8 +42,13 @@ export const createSubmission = asyncHandler(async (req, res) => {
   });
 
   sendSuccess(res, {
-    message: 'Submission evaluated successfully',
-    data: { submission: result },
+    message:
+      result.verdict === 'Accepted'
+        ? scoreAwarded > 0
+          ? `Accepted! +${scoreAwarded} points`
+          : 'Accepted!'
+        : 'Submission evaluated',
+    data: { submission: result, scoreAwarded, user: updatedUser },
     statusCode: 201,
   });
 });

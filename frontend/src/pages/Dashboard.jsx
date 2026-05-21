@@ -9,7 +9,7 @@ import { getErrorMessage } from '../api/axios.js';
 import { DIFFICULTY_COLORS } from '../utils/verdict.js';
 
 export default function Dashboard() {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const [submissions, setSubmissions] = useState([]);
   const [problems, setProblems] = useState([]);
   const [solved, setSolved] = useState(0);
@@ -31,12 +31,12 @@ export default function Dashboard() {
       try {
         const { data } = await authAPI.getMe();
         if (data.user) {
+          updateUser(data.user);
           const solvedList = data.user.solvedProblems;
           setSolved(Array.isArray(solvedList) ? solvedList.length : 0);
         }
       } catch {
-        /* keep user from context */
-        setSolved(0);
+        setSolved(user?.solvedProblems?.length || 0);
       }
 
       try {
