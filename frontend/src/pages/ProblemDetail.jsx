@@ -4,7 +4,8 @@ import toast from 'react-hot-toast';
 import CodeEditor from '../components/CodeEditor.jsx';
 import LoadingSpinner from '../components/LoadingSpinner.jsx';
 import { problemsAPI, submissionsAPI } from '../api/services.js';
-import { CODE_TEMPLATES, LANGUAGES } from '../constants/languages.js';
+import { LANGUAGES } from '../constants/languages.js';
+import { getStarterCode } from '../utils/problemStarters.js';
 import { getVerdictClass, DIFFICULTY_COLORS } from '../utils/verdict.js';
 import { useAuth } from '../hooks/useAuth.js';
 import { ROUTES } from '../constants/routes.js';
@@ -16,21 +17,25 @@ export default function ProblemDetail() {
   const [problem, setProblem] = useState(null);
   const [loading, setLoading] = useState(true);
   const [language, setLanguage] = useState('python');
-  const [code, setCode] = useState(CODE_TEMPLATES.python);
+  const [code, setCode] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState(null);
 
   useEffect(() => {
     problemsAPI
       .getById(id)
-      .then(({ data }) => setProblem(data.problem))
+      .then(({ data }) => {
+        const p = data.problem;
+        setProblem(p);
+        setCode(getStarterCode(p, 'python'));
+      })
       .catch(() => toast.error('Problem not found'))
       .finally(() => setLoading(false));
   }, [id]);
 
   const onLanguageChange = (lang) => {
     setLanguage(lang);
-    setCode(CODE_TEMPLATES[lang]);
+    if (problem) setCode(getStarterCode(problem, lang));
   };
 
   const handleSubmit = async () => {
@@ -135,7 +140,11 @@ export default function ProblemDetail() {
                 Time: {result.runtime}s · Memory: {result.memory} KB
               </p>
             )}
-            {result.errorMessage && <p className="text-sm mt-2 opacity-80">{result.errorMessage}</p>}
+            {result.errorMessage && (
+              <pre className="text-sm mt-2 opacity-90 whitespace-pre-wrap font-mono bg-black/20 p-3 rounded">
+                {result.errorMessage}
+              </pre>
+            )}
           </aside>
         )}
       </article>

@@ -50,7 +50,15 @@ export async function evaluateSubmission({ submission, problem, code, language, 
 
       if (actual !== expected) {
         finalVerdict = 'Wrong Answer';
-        errorMessage = 'Output does not match expected for a test case.';
+        errorMessage = [
+          'Your output does not match the expected result.',
+          '',
+          'Expected:',
+          expected || '(empty)',
+          '',
+          'Your output:',
+          actual || '(empty)',
+        ].join('\n');
         runtime = parseFloat(result.time) || 0;
         memory = result.memory || 0;
         break;
