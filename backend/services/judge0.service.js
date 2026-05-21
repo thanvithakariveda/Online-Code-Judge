@@ -16,10 +16,10 @@ function getClient() {
       process.env.JUDGE0_API_KEY &&
       process.env.JUDGE0_API_KEY !== 'your_rapidapi_key_here';
 
-    // No RapidAPI key → use free public Judge0 CE (no X-RapidAPI headers)
+    // Without a real RapidAPI key, never use rapidapi URL (avoids 401/403)
     const baseURL = hasRapidKey
       ? process.env.JUDGE0_API_URL || 'https://judge0-ce.p.rapidapi.com'
-      : process.env.JUDGE0_API_URL || 'https://ce.judge0.com';
+      : 'https://ce.judge0.com';
 
     const headers = { 'Content-Type': 'application/json' };
 

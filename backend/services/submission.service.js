@@ -3,10 +3,10 @@ import Problem from '../models/Problem.js';
 import User from '../models/User.js';
 import {
   runCode,
+  LANGUAGE_IDS,
   mapVerdict,
   normalizeOutput,
-  LANGUAGE_IDS,
-} from './judge0.service.js';
+} from './codeRunner.service.js';
 
 const SCORE_PER_SOLVE = 10;
 
@@ -29,6 +29,7 @@ export async function evaluateSubmission({ submission, problem, code, language, 
       const result = await runCode({
         sourceCode: code,
         languageId: LANGUAGE_IDS[language],
+        language,
         stdin: testCase.input,
         timeLimit: problem.timeLimit,
         memoryLimit: problem.memoryLimit,
